@@ -30,3 +30,5 @@ pip-wheel-metadata/
 
 .idea/
 .vscode/
+
+yolov8n.pt
