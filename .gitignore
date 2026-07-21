@@ -32,3 +32,5 @@ pip-wheel-metadata/
 .vscode/
 
 yolov8n.pt
+
+scripts/auto/llm/llm_human_relay_img/
