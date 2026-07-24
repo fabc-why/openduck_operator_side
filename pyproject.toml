@@ -1,0 +1,12 @@
+[project]
+name = "openduck-operator-side"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "numpy>=2.4.6",
+    "opencv-contrib-python>=5.0.0.93",
+    "pygame>=2.6.1",
+    "roslibpy>=2.1.0",
+]
