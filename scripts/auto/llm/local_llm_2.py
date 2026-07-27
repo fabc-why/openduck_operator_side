@@ -94,7 +94,7 @@ class OperationSide:
             'Return exactly one JSON object and nothing else. '
             'Allowed actions: STOP, FORWARD, BACKWARD, LEFT, RIGHT, ROTATE_LEFT, ROTATE_RIGHT. '
             'Use STOP if the scene is unclear or the instruction is unsafe. '
-            'The JSON schema is {"action": "...", "reason": "...", "duration": 1.0}. '
+            'The JSON schema is {"action": "...", "reason": "...", "duration": ...}. duration is a positive float number of seconds.'
             'The duration field is required and must be a positive number of seconds. '
             'Keep the reason short.'
         )
@@ -629,7 +629,7 @@ class OperationSide:
                 (20, 35),
                 cv2.FONT_HERSHEY_SIMPLEX,
                 0.8,
-                (255, 255, 255),
+                (0, 0, 255),
                 2,
             )
 
