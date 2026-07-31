@@ -94,9 +94,9 @@ class OperationSide:
             'Return exactly one JSON object and nothing else. '
             'Allowed actions: STOP, FORWARD, BACKWARD, LEFT, RIGHT, ROTATE_LEFT, ROTATE_RIGHT. '
             'Use STOP if the scene is unclear or the instruction is unsafe. '
-            'The JSON schema is {"action": "...", "reason": "...", "duration": ..., "history": ...}. '
+            'The JSON schema is {"action": "...", "reason": "...", "duration": ...}. '
             'The duration field is required and must be a positive float number of seconds. '
-            'history is required, and must be followed this schema: {"action": "...", "reason": "...", "duration": ..., "observation": "..."}. '
+            'Do not include history or any extra fields in the response. '
             'Keep the reason short.'
         )
 
@@ -477,7 +477,7 @@ class OperationSide:
                         'Operator goal:\n'
                         f'{task_text}\n'
                         f'{history_text}'
-                        'Return a single JSON object with an action and a short reason.'
+                        'Return a single JSON object with action, reason, and duration only.'
                     ),
                     'images': [image_b64],
                 },
@@ -521,7 +521,6 @@ class OperationSide:
         action = 'STOP'
         reason = ''
         duration = 0.0
-        history = self.history
 
         try:
             parsed = json.loads(candidate)
@@ -529,7 +528,6 @@ class OperationSide:
                 action = str(parsed.get('action', parsed.get('command', 'STOP'))).upper().strip()
                 reason = str(parsed.get('reason', '')).strip()
                 duration_value = parsed.get('duration', parsed.get('seconds', None))
-                self.history.append(parsed.get('history', []))
                 if duration_value is not None:
                     duration = float(duration_value)
             elif isinstance(parsed, str):
@@ -557,7 +555,17 @@ class OperationSide:
         if not reason:
             reason = self.truncate_text(text, 160)
 
-        return action, reason, duration, history
+        history_entry = {
+            'action': action,
+            'reason': reason,
+            'duration': duration,
+            'observation': self.truncate_text(text, 160),
+        }
+        self.history.append(history_entry)
+        if len(self.history) > 5:
+            self.history = self.history[-5:]
+
+        return action, reason, duration, list(self.history)
 
     def strip_code_fences(self, text):
         cleaned = text.strip()
