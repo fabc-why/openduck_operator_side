@@ -75,8 +75,8 @@ class OperationSide:
         self.CMD_STOP = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
         self.CMD_FORWARD = [0.2, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
         self.CMD_BACKWARD = [-0.2, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-        self.CMD_RIGHT = [0.0, 0.05, 0.0, 0.0, 0.0, 0.0, 0.0]
-        self.CMD_LEFT = [0.0, -0.05, 0.0, 0.0, 0.0, 0.0, 0.0]
+        self.CMD_RIGHT = [0.0, -0.5, 0.0, 0.0, 0.0, 0.0, 0.0]
+        self.CMD_LEFT = [0.0, 0.5, 0.0, 0.0, 0.0, 0.0, 0.0]
         self.CMD_ROTATE_LEFT = [0.0, 0.0, 0.6, 0.0, 0.0, 0.0, 0.0]
         self.CMD_ROTATE_RIGHT = [0.0, 0.0, -0.6, 0.0, 0.0, 0.0, 0.0]
 
