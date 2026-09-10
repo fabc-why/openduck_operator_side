@@ -19,6 +19,8 @@ import roslibpy
 
 
 FRAME_COUNT = 8
+IMAGE_MAX_DIMENSION = 640
+JPEG_QUALITY = 80
 
 
 class OperationSide:
@@ -91,8 +93,11 @@ class OperationSide:
             'If the scene is unclear, unsafe, or the target is not visible, choose STOP. '
             'Return exactly one JSON object and nothing else. '
             'Allowed actions: STOP, FORWARD, BACKWARD, ROTATE_LEFT, ROTATE_RIGHT. '
-            'Required JSON schema: {"action": "...", "reason": "...", "duration": <positive float>, "history": [<entry>, ...]}. '
+            'Required JSON schema: {"action": "...", "reason": "...", "duration": <positive number>, "history": [<entry>, ...]}. '
             'Each history entry must be an object with: {"action": "...", "reason": "...", "duration": <positive float>, "observation": "..."}. '
+            'The duration field is mandatory in every response. Use seconds: STOP=0.5, movement=0.5 to 2.0. '
+            'Valid example: {"action":"ROTATE_LEFT","reason":"red object detected","duration":1.0,"history":[]}. '
+            'Never return only an action name or a plain sentence. '
             'Use history to remember recent decisions and avoid repeating the same mistake. '
             'Keep the reason short and concrete. '
             'Do not include markdown, explanation, or extra text outside the JSON object.'
@@ -187,18 +192,26 @@ class OperationSide:
         ]
 
         if requested_model:
-            if requested_model in available_names:
+            if requested_model in vision_models:
                 return requested_model
 
-            self.log_status(
-                f'Requested model {requested_model} not found; auto-selecting a local model instead',
-                force=True,
-            )
+            if requested_model in available_names:
+                self.log_status(
+                    f'Requested model {requested_model} does not support images; auto-selecting a vision model instead',
+                    force=True,
+                )
+            else:
+                self.log_status(
+                    f'Requested model {requested_model} not found; auto-selecting a local vision model instead',
+                    force=True,
+                )
 
         if vision_models:
             return vision_models[0]
 
-        return available_names[0]
+        raise RuntimeError(
+            'No Ollama vision model is installed. Install a vision model such as qwen2.5vl:7b.'
+        )
 
     def load_droidcam_settings(self):
         env_path = Path(__file__).resolve().parents[3] / '.env'
@@ -476,11 +489,13 @@ class OperationSide:
                         'Operator goal:\n'
                         f'{task_text}\n'
                         f'{history_text}'
-                        'Return a single JSON object with an action and a short reason.'
+                        'Return exactly one JSON object with action, reason, positive duration in seconds, and history. '
+                        'Even STOP must include "duration": 0.5.'
                     ),
                     'images': image_b64_list,
                 },
             ],
+            'format': 'json',
             'options': {
                 'temperature': 0.0,
                 'top_p': 0.1,
@@ -497,8 +512,21 @@ class OperationSide:
         try:
             with urllib.request.urlopen(request, timeout=self.ollama_timeout) as response:
                 response_payload = json.loads(response.read().decode('utf-8'))
+        except urllib.error.HTTPError as exc:
+            error_body = exc.read().decode('utf-8', errors='replace').strip()
+            raise RuntimeError(
+                f'Ollama returned HTTP {exc.code}: {error_body or exc.reason}'
+            ) from exc
         except urllib.error.URLError as exc:
             raise RuntimeError(f'Failed to reach Ollama at {self.ollama_endpoint}: {exc}') from exc
+
+        print('\n' + '=' * 80, flush=True)
+        print('OLLAMA RESPONSE', flush=True)
+        print(f'model: {self.ollama_model}', flush=True)
+        print('response JSON:', flush=True)
+        print(json.dumps(response_payload, ensure_ascii=False, indent=2), flush=True)
+        print('message.content repr:', repr(response_payload.get('message', {}).get('content')), flush=True)
+        print('=' * 80 + '\n', flush=True)
 
         message = response_payload.get('message', {})
         content = message.get('content', '')
@@ -537,7 +565,9 @@ class OperationSide:
             action = text.splitlines()[0].strip().upper()
 
         if duration <= 0:
-            raise ValueError('LLM response must include a positive duration field')
+            action = 'STOP'
+            reason = reason or 'missing or invalid duration; stopped safely'
+            duration = 0.5
 
         action = re.sub(r'[^A-Z_]', '', action)
         allowed_actions = {
@@ -623,7 +653,23 @@ class OperationSide:
                 if not success or frame is None:
                     raise RuntimeError('DroidCamからフレームを取得できません')
 
-                success, encoded = cv2.imencode('.jpg', frame)
+                height, width = frame.shape[:2]
+                longest_side = max(height, width)
+                if longest_side > IMAGE_MAX_DIMENSION:
+                    scale = IMAGE_MAX_DIMENSION / longest_side
+                    frame_for_llm = cv2.resize(
+                        frame,
+                        (round(width * scale), round(height * scale)),
+                        interpolation=cv2.INTER_AREA,
+                    )
+                else:
+                    frame_for_llm = frame
+
+                success, encoded = cv2.imencode(
+                    '.jpg',
+                    frame_for_llm,
+                    [cv2.IMWRITE_JPEG_QUALITY, JPEG_QUALITY],
+                )
                 if not success:
                     self.log_status('Failed to encode DroidCam image', force=True)
                     continue
