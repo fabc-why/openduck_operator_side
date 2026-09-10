@@ -34,3 +34,5 @@ pip-wheel-metadata/
 yolov8n.pt
 
 scripts/auto/llm/llm_human_relay_img/
+
+*.env
