@@ -10,4 +10,5 @@ dependencies = [
     "opencv-contrib-python>=5.0.0.93",
     "pygame>=2.6.1",
     "roslibpy>=2.1.0",
+    "ultralytics>=8.3.0",
 ]
