@@ -19,7 +19,7 @@ import urllib.request
 """
 
 class OperationSide:
-    def __init__(self, host='localhost', port=9090, start_auto=True):
+    def __init__(self, host='localhost', port=9090, start_auto=True, model=None):
         self.client = roslibpy.Ros(host=host, port=port)
         self.client.run()
 
@@ -105,7 +105,7 @@ class OperationSide:
         self.ollama_timeout = 60.0
         self.ollama_keep_alive = '5m'
         self.ollama_endpoint = f'http://{self.ollama_host}:{self.ollama_port}/api/chat'
-        self.ollama_model = os.environ.get('OLLAMA_MODEL', 'llama3:8b')
+        self.ollama_model = model or os.environ.get('OLLAMA_MODEL', 'llama3:8b')
         self.llm_min_interval = 0.5
         self.last_llm_request_time = 0.0
         self.llm_busy = False
@@ -141,6 +141,7 @@ class OperationSide:
         self.llm_thread = threading.Thread(target=self.llm_loop, daemon=True)
         self.llm_thread.start()
 
+        print(f'Using Ollama model: {self.ollama_model}')
         print('OperationSide started with roslibpy')
         print('======================================')
         print('Commands:')
@@ -912,6 +913,11 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--host', default='localhost')
     parser.add_argument('--port', type=int, default=9090)
+    parser.add_argument(
+        '--model',
+        default=os.environ.get('OLLAMA_MODEL', 'llama3:8b'),
+        help='Ollama model name (default: OLLAMA_MODEL or llama3:8b)',
+    )
 
     # デフォルトは自動モードON
     parser.add_argument(
@@ -925,7 +931,8 @@ def main():
     node = OperationSide(
         host=args.host,
         port=args.port,
-        start_auto=not args.manual
+        start_auto=not args.manual,
+        model=args.model,
     )
 
     node.loop()
