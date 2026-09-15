@@ -94,7 +94,7 @@ class OperationSide:
             '{"action":"STOP|FORWARD|BACKWARD|ROTATE_LEFT|ROTATE_RIGHT",'
             '"reason":"short reason","duration":<positive float>,'
             '"history":[{"action":"...","reason":"...","duration":<positive float>,"observation":"..."}]}. '
-            'Use history to avoid repeating mistakes. No markdown or extra text.'
+            'Use history to avoid repeating mistakes if it is available. No markdown or extra text.'
         )
 
         self.history = []
