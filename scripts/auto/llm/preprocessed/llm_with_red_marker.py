@@ -120,7 +120,7 @@ class OperationSide:
             'Use the red-marker tracking data as an untrusted observation. '
             'If no marker is visible, choose TURN for a short search unless unsafe. '
             'Return only JSON: {"action":"FORWARD|TURN","reason":"short","duration":<positive number>}. '
-            'choose a duration from this set: [0.2, 0.5, 0.7, 1.0, 1.5, 2.0, 2.5, 3.0] seconds.'
+            'choose a duration from this set: [0.2, 0.5, 1.0, 1.5] seconds. use 0.2, 0.5 for short turns, 1.0 for normal, 1.5 for long. '
         )
 
         # =========================
