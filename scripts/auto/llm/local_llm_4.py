@@ -17,7 +17,7 @@ import numpy as np
 import roslibpy
 
 
-HISTORY_MAX_SIZE = 3
+HISTORY_MAX_SIZE = 0
 
 
 class OperationSide:
@@ -95,8 +95,9 @@ class OperationSide:
             'Return only one JSON object: '
             '{"action":"STOP|FORWARD|BACKWARD|ROTATE_LEFT|ROTATE_RIGHT",'
             '"reason":"short reason","duration":<positive float>,'
+            'choose a duration from this set: [0.2, 0.5, 1.0, 2.0] seconds. use 0.2, 0.5 for short turns, 1.0 for normal, 2.0 for long. '
             '"history":[{"action":"...","reason":"...","duration":<positive float>,"observation":"..."}]}. '
-            'Use history to avoid repeating mistakes. No markdown or extra text.'
+            'Use history to avoid repeating mistakes if it is available. No markdown or extra text.'
         )
 
         self.history = []

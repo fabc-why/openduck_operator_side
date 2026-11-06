@@ -95,7 +95,7 @@ class OperationSide:
             'Allowed actions: STOP, FORWARD, BACKWARD, LEFT, RIGHT, ROTATE_LEFT, ROTATE_RIGHT. '
             'Use STOP if the scene is unclear or the instruction is unsafe. '
             'The JSON schema is {"action": "...", "reason": "...", "duration": ...}. '
-            'The duration field is required and must be a positive float number of seconds. '
+            'The duration field is required and must be a positive float number of seconds. candidate durations:  1.5, 2.0, 3.0, 4.0, 5.0. '
             'Do not include history or any extra fields in the response. '
             'Keep the reason short.'
         )

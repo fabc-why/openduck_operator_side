@@ -1,0 +1,2 @@
+~/openduck_operator_side/.venv/bin/python /home/openduck/openduck_operator_side/scripts/auto/llm/local_llm_2.py --model gemma4:12b --task "look for redba
+ll. if you find redball, run away from it because it is dangerous. you must not use back walking"
