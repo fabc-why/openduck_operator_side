@@ -1,34 +1,29 @@
-import roslibpy
 import numpy as np
 import cv2
-import json
-import base64
 import argparse
 import time
 import pygame
 
+try:
+    from scripts.ros2_base import Ros2Base
+except ModuleNotFoundError as error:
+    if error.name != 'scripts':
+        raise
+    import sys
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+    from ros2_base import Ros2Base
 
-class OperationSide:
-    def __init__(self, host='localhost', port=9090):
-        self.client = roslibpy.Ros(host=host, port=port)
-        self.client.run()
-
-        self.sub = roslibpy.Topic(
-            self.client,
-            'openduck/head_cam/compressed',
-            'sensor_msgs/CompressedImage'
-        )
-        self.sub.subscribe(self.listener_callback)
-
-        self.pub = roslibpy.Topic(
-            self.client,
-            'openduck/commands',
-            'std_msgs/String'
-        )
-        self.pub.advertise()
-
-        self.running = True
+class OperationSide(Ros2Base):
+    def __init__(self, host='localhost', port=9090, ros_namespace='openduck'):
         self.command = [0.0] * 7
+        super().__init__(
+            host=host,
+            port=port,
+            ros_namespace=ros_namespace,
+            image_callback=self.handle_image,
+            stop_command=self.command,
+        )
 
         pygame.init()
         pygame.joystick.init()
@@ -104,11 +99,7 @@ class OperationSide:
             neck4
         ]
 
-        msg = roslibpy.Message({
-            'data': json.dumps(self.command)
-        })
-
-        self.pub.publish(msg)
+        self.publish_command(self.command)
 
         print(
             f'Published command: {self.command} | '
@@ -117,34 +108,10 @@ class OperationSide:
             f'button_x: {button_x}'
         )
 
-    def listener_callback(self, message):
+    def handle_image(self, frame):
         try:
-            data = message.get('data', None)
-
-            if data is None:
-                print('Image message has no data')
-                return
-
-            if isinstance(data, str):
-                image_bytes = base64.b64decode(data)
-                arr = np.frombuffer(image_bytes, dtype=np.uint8)
-
-            elif isinstance(data, list):
-                arr = np.array(data, dtype=np.uint8)
-
-            else:
-                print(f'Unsupported image data type: {type(data)}')
-                return
-
-            frame = cv2.imdecode(arr, cv2.IMREAD_COLOR)
-
-            if frame is None:
-                print('Failed to decode image')
-                return
-
             cv2.imshow('operation_side', frame)
             cv2.waitKey(1)
-
         except Exception as e:
             print(f'Error decoding/displaying image: {e}')
 
@@ -164,26 +131,6 @@ class OperationSide:
             self.cleanup()
 
     def cleanup(self):
-        self.running = False
-
-        try:
-            stop_msg = roslibpy.Message({
-                'data': json.dumps([0.0] * 7)
-            })
-            self.pub.publish(stop_msg)
-        except Exception:
-            pass
-
-        try:
-            self.sub.unsubscribe()
-        except Exception:
-            pass
-
-        try:
-            self.pub.unadvertise()
-        except Exception:
-            pass
-
         try:
             cv2.destroyAllWindows()
         except Exception:
@@ -194,23 +141,24 @@ class OperationSide:
         except Exception:
             pass
 
-        try:
-            self.client.terminate()
-        except Exception:
-            pass
+        super().cleanup()
 
         print('OperationSide shutdown complete')
 
 
 def main():
     parser = argparse.ArgumentParser()
+    parser.add_argument('robot_id', nargs='?', type=int)
     parser.add_argument('--host', default='localhost')
     parser.add_argument('--port', type=int, default=9090)
     args = parser.parse_args()
 
     node = OperationSide(
         host=args.host,
-        port=args.port
+        port=args.port,
+        ros_namespace=f'openduck{args.robot_id}'
+        if args.robot_id is not None
+        else 'openduck',
     )
     node.loop()
 
