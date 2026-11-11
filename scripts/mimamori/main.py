@@ -15,7 +15,8 @@ except ImportError:
     from seek_openduck import OperationSide
     from ros2_base import Ros2Base
 
-
+# ここでインタプリタとかエントリポイントの指定してるので、これを変えないといけないです。
+# https://github.com/fabc-why/whisper
 WHISPER_PYTHON: Final = '/home/openduck/openduck_function/whisper/.venv/bin/python'
 WHISPER_MAIN: Final = '/home/openduck/openduck_function/whisper/src/main.py'
 WHISPER_CWD: Final = '/home/openduck/openduck_function/whisper'
