@@ -12,4 +12,5 @@ dependencies = [
     "lerobot>=0.4.4,<0.5.0",
     "roslibpy>=2.1.0",
     "ultralytics>=8.3.0",
+    "opencv-python>=5.0.0.93",
 ]
